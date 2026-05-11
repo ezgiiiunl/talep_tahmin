@@ -11,3 +11,4 @@ Temel amaçlar:
 • Tahmin edilen değerlere göre maliyet hesaplamak  
 • Bütçe sınırı içinde kalacak şekilde ürün seçimini değerlendirmek  
 • Kullanıcıya basit bir karar destek aracı sunmak 
+![Ekran Görüntüsü](Ekran%20görüntüsü%202026-05-11%20143654.png)
