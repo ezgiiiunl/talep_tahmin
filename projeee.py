@@ -4,128 +4,203 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-data = pd.read_csv("stoktahminveri(2).csv")
+st.set_page_config(
+    page_title="Talep ve Maliyet Tahmin Sistemi",
+    layout="wide"
+)
 
 st.markdown("""
-    <h1 style='text-align: center; color: #6B74B0;'>Yedek Parça Ve Malzemeler İçin Maliyet ve Talep Tahmin Sistemi</h1>
-    <hr style='border-top: 1px solid #bbb;'/>
-    <style>
-    .stApp {
-        background-color: #D4D1DE;
-    }
-    </style>
+<style>
+/* Uygulama genelindeki boşlukları azaltır */
+.block-container {
+    padding-top: 4.5rem !important;
+    padding-bottom: 0rem !important;
+}
+
+.stApp {
+    background: #f6f8fc;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* BAŞLIK */
+.title {
+    text-align:center;
+    font-size:32px;
+    font-weight:800;
+    color:#1f2937;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    text-align:center;
+    color:#6b7280;
+    margin-bottom:20px;
+    font-size:14px;
+}
+
+/* CARD - Boşluklar minimize edildi */
+.card {
+    background:white;
+    padding:12px 18px;
+    border-radius:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom:10px;
+    border:1px solid #eef2f7;
+}
+
+/* KPI */
+.kpi {
+    background: linear-gradient(135deg,#4f46e5,#6366f1);
+    color:white;
+    padding:15px;
+    border-radius:14px;
+    text-align:center;
+    margin-bottom: 10px;
+}
+
+.kpi-title {
+    font-size:12px;
+    opacity:0.85;
+}
+
+.kpi-value {
+    font-size:20px;
+    font-weight:700;
+    margin-top:3px;
+}
+
+/* Tabloyu daralt */
+div[data-testid="stDataFrame"] {
+    margin-top: 10px;
+}
+
+.success {
+    background:#ecfdf5;
+    border-left:4px solid #10b981;
+    padding:12px;
+    border-radius:10px;
+    margin-top: 5px;
+}
+
+.warning {
+    background:#fff7ed;
+    border-left:4px solid #f59e0b;
+    padding:12px;
+    border-radius:10px;
+    margin-top: 5px;
+}
+</style>
 """, unsafe_allow_html=True)
+
+
+data = pd.read_csv("stoktahminveri(2).csv")
+
+st.markdown('<div class="title">Talep & Maliyet Tahmin Sistemi</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Linear Regresyon ile Karar Destek Paneli</div>', unsafe_allow_html=True)
+
 
 X = data[["stok_miktari", "yil_icinde_kullanilan", "gecen_yil_kullanilan", "yil_ici_alinan"]]
 Y = data["siparis_miktari"]
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.1, random_state=42)
 
-lr_model = LinearRegression()
-lr_model.fit(X_train, Y_train)
-Y_pred_lr = lr_model.predict(X_test)
-mse_lr = mean_squared_error(Y_test, Y_pred_lr)
-r2_lr = r2_score(Y_test, Y_pred_lr)
+model = LinearRegression()
+model.fit(X_train, Y_train)
+pred = model.predict(X_test)
 
-st.subheader("Model Hata Oranları")
-st.write(f"Doğrusal Regresyon - Ortalama Kare Hatası (MSE): {mse_lr:.2f}, R2 Skoru: {r2_lr:.2f}")
-model = lr_model
-st.success("Kullanılan model: LinearRegression")
+mse = mean_squared_error(Y_test, pred)
+r2 = r2_score(Y_test, pred)
 
-secim = st.multiselect("Ürün Seçiniz", data["urun_adi"].unique())
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.markdown(
+        f'<div class="kpi"><div class="kpi-title">Model</div><div class="kpi-value">Linear Regression</div></div>',
+        unsafe_allow_html=True)
+with c2:
+    st.markdown(f'<div class="kpi"><div class="kpi-title">Hata (MSE)</div><div class="kpi-value">{mse:.2f}</div></div>',
+                unsafe_allow_html=True)
+with c3:
+    st.markdown(
+        f'<div class="kpi"><div class="kpi-title">Doğruluk (R²)</div><div class="kpi-value">{r2:.2f}</div></div>',
+        unsafe_allow_html=True)
+
+
+st.markdown('<div class="card">', unsafe_allow_html=True)
+secim = st.multiselect("Ürün Seçimi", data["urun_adi"].unique())
+st.markdown('</div>', unsafe_allow_html=True)
 
 if secim:
-    secilen_veri = data[data["urun_adi"].isin(secim)].copy()
-    kullanici_tahminleri = {}
+    secilen = data[data["urun_adi"].isin(secim)].copy()
+    tahminler = {}
 
-    st.markdown("Kendi Tahminlerinizi Giriniz")
-    for idx, row in secilen_veri.iterrows():
-        tahmin_input = st.number_input(
-            f"{row['urun_adi']} için kendi tahmin ettiğiniz sipariş miktarı",
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # Number inputlar arası boşluğu daraltmak için sütunlar kullanılabilir veya CSS halleder
+    for i, row in secilen.iterrows():
+        tahminler[i] = st.number_input(
+            f"{row['urun_adi']} - Kullanıcı Tahmini",
             min_value=0,
             step=1,
-            key=f"tahmin_{idx}"
+            key=i
         )
-        kullanici_tahminleri[idx] = tahmin_input
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    secilen_veri["tahmini_siparis"] = model.predict(
-        secilen_veri[["stok_miktari", "yil_icinde_kullanilan", "gecen_yil_kullanilan", "yil_ici_alinan"]]
-    )
-    secilen_veri["kullanici_tahmin"] = secilen_veri.index.map(kullanici_tahminleri)
+    # Hesaplamalar
+    secilen["model_tahmin"] = model.predict(secilen[X.columns])
+    secilen["kullanici_tahmin"] = secilen.index.map(tahminler)
+    secilen["maliyet"] = secilen["model_tahmin"] * secilen["birim_maliyet"]
 
-    def yorum(model_tahmin, kullanici):
-        if kullanici == 0:
-            return "Girilmedi!"
-        elif kullanici > model_tahmin:
-            return "Fazla tahmin ettiniz,lütfen tahmininizi güncelleyin!"
-        elif kullanici < model_tahmin:
-            return "Az tahmin ettiniz,lütfen tahmininizi güncelleyin!"
-        else:
-            return "Tahmininiz doğru!"
 
-    secilen_veri["yorum"] = secilen_veri.apply(
-        lambda row: yorum(row["tahmini_siparis"], row["kullanici_tahmin"]), axis=1
-    )
-    secilen_veri["tahmini_maliyet"] = secilen_veri["tahmini_siparis"] * secilen_veri["birim_maliyet"]
+    def yorum(m, k):
+        if k == 0: return "Girilmedi"
+        if k > m: return "Fazla"
+        if k < m: return "Az"
+        return "Uygun"
 
-    Butce_limiti = st.number_input("Bütçenizi giriniz (TL)", min_value=0, value=800000, step=1000)
-    toplam_maliyet = secilen_veri["tahmini_maliyet"].sum()
-    st.write(f"Seçilen ürünlerin toplam tahmini maliyeti: {toplam_maliyet:.2f} TL")
 
-    st.markdown("Seçilen Ürünler ve Tahminler")
-    st.dataframe(secilen_veri[[
-        "urun_adi",
-        "stok_miktari",
-        "yil_icinde_kullanilan",
-        "gecen_yil_kullanilan",
-        "yil_ici_alinan",
-        "birim_maliyet",
-        "tahmini_siparis",
-        "kullanici_tahmin",
-        "yorum",
-        "tahmini_maliyet"
-    ]])
+    secilen["durum"] = secilen.apply(lambda x: yorum(x["model_tahmin"], x["kullanici_tahmin"]), axis=1)
 
-    if toplam_maliyet <= Butce_limiti:
-        st.success("Seçilen tüm ürünler bütçeye uygun.")
-    else:
-        st.markdown("""
-        <div style='background-color:#BABEE0; padding:15px; border-radius:10px; border:1px solid purple;'>
-            <strong style='color:#6D5FB3;'>Bütçenizi aştınız, ilk olarak belirtilen malzemeleri alın.</strong>
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    b_col1, b_col2 = st.columns([2, 1])
+    with b_col1:
+        butce = st.number_input("Bütçe (TL)", value=800000)
+
+    toplam = secilen["maliyet"].sum()
+
+    with b_col2:
+        st.markdown(f"""
+        <div class="kpi" style="margin-bottom:0; padding:10px;">
+        <div class="kpi-title">Toplam Maliyet</div>
+        <div class="kpi-value" style="font-size:18px;">{toplam:,.0f} TL</div>
         </div>
         """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        secilen_veri["oncelik"] = secilen_veri["yil_icinde_kullanilan"] / (secilen_veri["stok_miktari"] + 1)
-        secilen_veri = secilen_veri.sort_values(by="oncelik", ascending=False)
 
-        secilenler = []
-        toplam = 0
-        for _, row in secilen_veri.iterrows():
-            if toplam + row["tahmini_maliyet"] <= Butce_limiti:
-                secilenler.append(row)
-                toplam += row["tahmini_maliyet"]
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.dataframe(
+        secilen[["urun_adi", "stok_miktari", "model_tahmin", "kullanici_tahmin", "maliyet", "durum"]],
+        use_container_width=True
+    )
 
-        secilen_df = pd.DataFrame(secilenler)
+    if toplam <= butce:
+        st.markdown('<div class="success">Bütçeyi aşmıyor.</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="warning">Bütçe aşılıyor, optimizasyon uygulanıyor.</div>', unsafe_allow_html=True)
+        # Optimizasyon mantığı
+        secilen["oncelik"] = secilen["yil_icinde_kullanilan"] / (secilen["stok_miktari"] + 1)
+        secilen = secilen.sort_values("oncelik", ascending=False)
+        liste = []
+        t = 0
+        for _, r in secilen.iterrows():
+            if t + r["maliyet"] <= butce:
+                liste.append(r)
+                t += r["maliyet"]
+        if liste:
+            opt = pd.DataFrame(liste)
+            st.dataframe(opt[["urun_adi", "maliyet", "oncelik"]], use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown(f"""
-               <div style='background-color:#BABEE0; padding:15px; border-radius:10px; border:1px solid purple;'>
-                   <strong style='color:#6D5FB3;'>Bütçe aşıldığı için sadece {len(secilen_df)} ürün önerildi.</strong>
-               </div>
-               """, unsafe_allow_html=True)
-
-        st.write(f"Önerilen ürünlerin toplam maliyeti: {toplam:.2f} TL")
-
-        st.dataframe(secilen_df[[
-            "urun_adi",
-            "stok_miktari",
-            "yil_icinde_kullanilan",
-            "gecen_yil_kullanilan",
-            "yil_ici_alinan",
-            "birim_maliyet",
-            "tahmini_siparis",
-            "kullanici_tahmin",
-            "yorum",
-            "tahmini_maliyet"
-        ]])
 else:
-    st.info("Lütfen ürün veya ürünler seçiniz.")
+    st.markdown('<div class="warning">Lütfen ürün seçiniz</div>', unsafe_allow_html=True)
