@@ -6,6 +6,7 @@ Bu proje, stok yönetimi ve satın alma süreçlerinde karar vermeyi desteklemek
 geliştirilmiştir. Sistem, geçmiş verilerden yararlanarak ürün bazında yaklaşık talep (sipariş 
 miktarı) tahmini yapmak, bu tahmine göre maliyet hesaplamak ve belirlenen bütçe sınırı içinde 
 ürün seçimi konusunda yardımcı olmak için tasarlanmıştır. 
+
 Temel amaçlar: 
 • Geçmiş kullanım verilerine dayalı olarak sipariş ihtiyacını tahmin etmek  
 • Tahmin edilen değerlere göre maliyet hesaplamak  
