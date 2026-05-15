@@ -8,6 +8,7 @@ miktarı) tahmini yapmak, bu tahmine göre maliyet hesaplamak ve belirlenen büt
 ürün seçimi konusunda yardımcı olmak için tasarlanmıştır. 
 
 Temel amaçlar: 
+
 • Geçmiş kullanım verilerine dayalı olarak sipariş ihtiyacını tahmin etmek  
 • Tahmin edilen değerlere göre maliyet hesaplamak  
 • Bütçe sınırı içinde kalacak şekilde ürün seçimini değerlendirmek  
